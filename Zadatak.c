@@ -2,7 +2,9 @@
 #include <avr/interrupt.h>
 #include <avr/pgmspace.h>
 #include <util/delay.h>
+#include <string.h>
 
+#define BR_KORISNIKA 10
 //Velicina prijemnog bafera (mora biti 2^n)
 #define USART_RX_BUFFER_SIZE 64
 
@@ -97,9 +99,82 @@ unsigned char usartGetString(char *s)
 int main()
 {
 	usartInit(9600);
-  	usartPutString("Ovo je proba\r\n");
+	char ime[32], pin[5];
+	int i, br_Unet_Koris, br_Pokusaja, uspeh;
+	
+	char korisnici[BR_KORISNIKA][32] =
+	{
+		"Marko Markovic",
+      	"Mirko Mirkovic",
+      	"Dante Bosco",
+      	"Vanja Vidic",
+      	"Milos Samardzic",
+      	"Nina Vladic",
+      	"Hektor Ratar",
+      	"Ilija Milic",
+      	"Sofija Tomic",
+      	"Marija Maric"
+	};
+	
+	char PIN[BR_KORISNIKA][5] = {"5346", "2133", "7445", "8756", "7435", "9875", "4532", "4537", "1234", "5498"};
+  	
 	while(1)
 	{
+		br_Unet_Koris = -1;
+		br_Pokusaja = 0;
+		uspeh = 0;
+		
+		usartPutString("Unesite ime i prezime: ");
+		_delay_ms(50);
+		
+		while (usartAvailable() <= 0);
+		_delay_ms(100);
+		usartGetString(ime);
+		_delay_ms(50);
+		usartPutString(ime);
+		usartPutString("\r\n");
+		
+		for (i = 0; i < BR_KORISNIKA; i++)
+		{
+			if (strcmp(ime, korisnici[i]) == 0)
+			{
+				br_Unet_Koris = i;
+			}
+		}
+		
+		if (br_Unet_Koris != -1)
+		{
+			do
+			{
+				usartPutString("Unesite vas pin: ");
+				for (i = 0; i < 4; i++)
+				{
+					while (usartAvailable() <= 0);
+					_delay_ms(100);
+					pin[i] = usartGetChar();
+					_delay_ms(50);
+					usartPutChar('*');
+					_delay_ms(50);
+				}
+				usartPutString("\r\n");
+
+				if (strcmp(pin, PIN[br_Unet_Koris]) == 0)
+				{
+						usartPutString("Uneli ste TACAN pin.\r\n\n");
+						uspeh = 1;
+				}else
+				{
+						usartPutString("Uneli ste POGRESAN pin!\r\n\n");
+						br_Pokusaja++;
+				}
+			}while (br_Pokusaja < 3 && uspeh != 1);
+			
+			if (br_Pokusaja == 3)
+				usartPutString("Vasa kartica je POJEDENA!!!\r\n\n");
+		}else
+		{
+			usartPutString("Korisnik ne postoji!\r\n\n");	
+		}
 		
 	}
 

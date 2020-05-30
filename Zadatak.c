@@ -125,8 +125,6 @@ int main()
 		uspeh = 0;
 		
 		usartPutString("Unesite ime i prezime: ");
-		_delay_ms(50);
-		
 		while (usartAvailable() <= 0);
 		_delay_ms(100);
 		usartGetString(ime);
